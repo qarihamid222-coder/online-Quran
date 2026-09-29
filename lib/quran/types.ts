@@ -25,3 +25,15 @@ export interface Ayah {
 export interface SurahDetail extends SurahSummary {
   ayahs: Ayah[];
 }
+
+/** An ayah within a juz, tagged with the surah it belongs to (a juz can span multiple surahs). */
+export interface JuzAyah extends Ayah {
+  surahNumber: number;
+  surahName: string;
+  surahEnglishName: string;
+}
+
+export interface JuzDetail {
+  number: number;
+  ayahs: JuzAyah[];
+}

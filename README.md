@@ -35,13 +35,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```
 app/               Routes (App Router pages, layouts, API routes)
-  quran/           Surah list and surah reader pages
+  quran/           Surah list, surah reader, juz index, and juz reader pages
 components/
-  quran/           Quran-specific UI (SurahCard, SurahList, SurahHeader, AyahCard, ...)
-  layout/          Navbar, Footer, Sidebar
+  quran/           Quran-specific UI (SurahCard, SurahList, SurahHeader, AyahCard, SurahDivider, ...)
+  layout/          Navbar, ThemeToggle, Footer, Sidebar
   ui/              Shared/generic UI primitives (Skeleton, EmptyState, ErrorState)
 lib/
   quran/           Quran data client — isolated wrapper around the external Quran API
+  theme.ts         Light/Dark/System theme state, shared by the toggle and the blocking init script
 hooks/             Reusable React hooks (useAudioPlayer)
 store/             Client-side state (Zustand)
 prisma/            Database schema (added in a later phase)
@@ -62,7 +63,19 @@ islamic.network CDN — no extra API call needed). On the surah reader page,
 `AudioPlayerProvider` (`components/quran/AudioPlayerProvider.tsx`) manages a single shared
 `<audio>` element via the `useAudioPlayer` hook: tapping any ayah's play button starts a
 queue that continues sequentially through the rest of the surah, which also serves as
-"play surah" when started from the first ayah.
+"play surah" when started from the first ayah. Juz pages use the same player across the
+whole juz, spanning surahs.
+
+## Navigation & UX
+
+- **Juz view** — `/quran/juz` lists all 30 juz; `/quran/juz/[juzNumber]` reads a juz
+  straight through, with a divider whenever the surah changes.
+- **Verse deep-linking** — every ayah has a stable anchor (`#ayah-<global-ayah-number>`,
+  unique across the whole Quran) and a "Copy link" button. Opening a link to one scrolls
+  to it and briefly highlights it.
+- **Dark mode** — a Light/Dark/System toggle in the navbar (`components/layout/ThemeToggle.tsx`),
+  backed by `lib/theme.ts` and a blocking init script in `app/layout.tsx` so there's no
+  flash of the wrong theme on load.
 
 ## Roadmap
 

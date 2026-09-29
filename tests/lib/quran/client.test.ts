@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { QuranApiError, fetchSurah, fetchSurahList, isValidSurahNumber } from '@/lib/quran/client';
+import {
+  QuranApiError,
+  fetchJuz,
+  fetchSurah,
+  fetchSurahList,
+  isValidJuzNumber,
+  isValidSurahNumber,
+} from '@/lib/quran/client';
 
 function jsonResponse(body: unknown, init: { ok?: boolean; status?: number } = {}) {
   return {
@@ -192,5 +199,141 @@ describe('fetchSurah', () => {
     );
 
     await expect(fetchSurah(1)).rejects.toBeInstanceOf(QuranApiError);
+  });
+});
+
+describe('isValidJuzNumber', () => {
+  it('accepts integers from 1 to 30', () => {
+    expect(isValidJuzNumber(1)).toBe(true);
+    expect(isValidJuzNumber(30)).toBe(true);
+    expect(isValidJuzNumber(15)).toBe(true);
+  });
+
+  it('rejects out-of-range and non-integer values', () => {
+    expect(isValidJuzNumber(0)).toBe(false);
+    expect(isValidJuzNumber(31)).toBe(false);
+    expect(isValidJuzNumber(-1)).toBe(false);
+    expect(isValidJuzNumber(1.5)).toBe(false);
+    expect(isValidJuzNumber(Number.NaN)).toBe(false);
+  });
+});
+
+describe('fetchJuz', () => {
+  it('rejects invalid juz numbers without calling fetch', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchJuz(0)).rejects.toBeInstanceOf(QuranApiError);
+    await expect(fetchJuz(31)).rejects.toBeInstanceOf(QuranApiError);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('maps ayahs spanning multiple surahs, tagging each with its surah', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        code: 200,
+        status: 'OK',
+        data: [
+          {
+            number: 30,
+            edition: { identifier: 'quran-uthmani' },
+            ayahs: [
+              {
+                number: 6231,
+                numberInSurah: 1,
+                text: 'قُلْ أَعُوذُ بِرَبِّ النَّاسِ',
+                surah: { number: 114, name: 'سُورَةُ النَّاسِ', englishName: 'An-Naas' },
+              },
+              {
+                number: 6210,
+                numberInSurah: 1,
+                text: 'قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ',
+                surah: { number: 113, name: 'سُورَةُ الْفَلَقِ', englishName: 'Al-Falaq' },
+              },
+            ],
+          },
+          {
+            number: 30,
+            edition: { identifier: 'en.sahih' },
+            ayahs: [
+              {
+                number: 6231,
+                numberInSurah: 1,
+                text: 'Say, "I seek refuge in the Lord of mankind,',
+                surah: { number: 114, name: 'An-Naas', englishName: 'An-Naas' },
+              },
+              {
+                number: 6210,
+                numberInSurah: 1,
+                text: 'Say, "I seek refuge in the Lord of daybreak',
+                surah: { number: 113, name: 'Al-Falaq', englishName: 'Al-Falaq' },
+              },
+            ],
+          },
+          {
+            number: 30,
+            edition: { identifier: 'ur.jalandhry' },
+            ayahs: [
+              {
+                number: 6231,
+                numberInSurah: 1,
+                text: 'اردو ترجمہ الناس 1',
+                surah: { number: 114, name: 'An-Naas', englishName: 'An-Naas' },
+              },
+              {
+                number: 6210,
+                numberInSurah: 1,
+                text: 'اردو ترجمہ الفلق 1',
+                surah: { number: 113, name: 'Al-Falaq', englishName: 'Al-Falaq' },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const juz = await fetchJuz(30);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.alquran.cloud/v1/juz/30/editions/quran-uthmani,en.sahih,ur.jalandhry',
+    );
+    expect(juz.number).toBe(30);
+    expect(juz.ayahs).toHaveLength(2);
+    expect(juz.ayahs[0]).toEqual({
+      number: 1,
+      numberInQuran: 6231,
+      arabicText: 'قُلْ أَعُوذُ بِرَبِّ النَّاسِ',
+      translations: {
+        english: 'Say, "I seek refuge in the Lord of mankind,',
+        urdu: 'اردو ترجمہ الناس 1',
+      },
+      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6231.mp3',
+      surahNumber: 114,
+      surahName: 'سُورَةُ النَّاسِ',
+      surahEnglishName: 'An-Naas',
+    });
+    expect(juz.ayahs[1].surahNumber).toBe(113);
+  });
+
+  it('throws a QuranApiError when the Arabic edition is missing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          code: 200,
+          status: 'OK',
+          data: [
+            {
+              number: 30,
+              edition: { identifier: 'en.sahih' },
+              ayahs: [],
+            },
+          ],
+        }),
+      ),
+    );
+
+    await expect(fetchJuz(30)).rejects.toBeInstanceOf(QuranApiError);
   });
 });

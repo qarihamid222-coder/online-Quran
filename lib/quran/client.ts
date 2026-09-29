@@ -1,11 +1,12 @@
 import {
   ARABIC_EDITION,
   QURAN_API_BASE_URL,
+  TOTAL_JUZ,
   TOTAL_SURAHS,
   TRANSLATION_EDITIONS,
 } from './constants';
 import { getAyahAudioUrl } from './audio';
-import type { Ayah, RevelationType, SurahDetail, SurahSummary } from './types';
+import type { Ayah, JuzAyah, JuzDetail, RevelationType, SurahDetail, SurahSummary } from './types';
 
 export class QuranApiError extends Error {
   readonly status?: number;
@@ -46,6 +47,25 @@ interface RawSurahEdition {
   revelationType: string;
   numberOfAyahs: number;
   ayahs: RawAyah[];
+  edition: {
+    identifier: string;
+  };
+}
+
+interface RawJuzAyah {
+  number: number;
+  numberInSurah: number;
+  text: string;
+  surah: {
+    number: number;
+    name: string;
+    englishName: string;
+  };
+}
+
+interface RawJuzEdition {
+  number: number;
+  ayahs: RawJuzAyah[];
   edition: {
     identifier: string;
   };
@@ -145,6 +165,52 @@ export async function fetchSurah(surahNumber: number): Promise<SurahDetail> {
     englishNameTranslation: arabicEdition.englishNameTranslation,
     numberOfAyahs: arabicEdition.numberOfAyahs,
     revelationType: toRevelationType(arabicEdition.revelationType),
+    ayahs,
+  };
+}
+
+export function isValidJuzNumber(value: number): boolean {
+  return Number.isInteger(value) && value >= 1 && value <= TOTAL_JUZ;
+}
+
+export async function fetchJuz(juzNumber: number): Promise<JuzDetail> {
+  if (!isValidJuzNumber(juzNumber)) {
+    throw new QuranApiError(`Invalid juz number: ${juzNumber}.`);
+  }
+
+  const editions = [ARABIC_EDITION, TRANSLATION_EDITIONS.english, TRANSLATION_EDITIONS.urdu].join(
+    ',',
+  );
+  const data = await fetchQuranApi<RawJuzEdition[]>(`/juz/${juzNumber}/editions/${editions}`);
+
+  const arabicEdition = data.find((edition) => edition.edition.identifier === ARABIC_EDITION);
+  const englishEdition = data.find(
+    (edition) => edition.edition.identifier === TRANSLATION_EDITIONS.english,
+  );
+  const urduEdition = data.find(
+    (edition) => edition.edition.identifier === TRANSLATION_EDITIONS.urdu,
+  );
+
+  if (!arabicEdition) {
+    throw new QuranApiError('The Quran data service did not return the Arabic text for this juz.');
+  }
+
+  const ayahs: JuzAyah[] = arabicEdition.ayahs.map((ayah, index) => ({
+    number: ayah.numberInSurah,
+    numberInQuran: ayah.number,
+    arabicText: ayah.text,
+    translations: {
+      english: englishEdition?.ayahs[index]?.text,
+      urdu: urduEdition?.ayahs[index]?.text,
+    },
+    audioUrl: getAyahAudioUrl(ayah.number),
+    surahNumber: ayah.surah.number,
+    surahName: ayah.surah.name,
+    surahEnglishName: ayah.surah.englishName,
+  }));
+
+  return {
+    number: juzNumber,
     ayahs,
   };
 }

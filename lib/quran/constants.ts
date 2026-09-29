@@ -9,6 +9,8 @@ export const TRANSLATION_EDITIONS = {
 
 export const TOTAL_SURAHS = 114;
 
+export const TOTAL_JUZ = 30;
+
 // Audio is served from the same network (islamic.network) that powers the
 // alquran.cloud API, at predictable URLs — no extra API call is needed to
 // resolve an ayah or surah recitation.

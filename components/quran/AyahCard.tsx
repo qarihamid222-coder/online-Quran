@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import type { Ayah } from '@/lib/quran';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 
@@ -14,6 +15,22 @@ export function AyahCard({ ayah, index }: AyahCardProps) {
   const isActivePlaying = isActive && isPlaying;
   const isActiveLoading = isActive && isLoading;
 
+  const anchorId = `ayah-${ayah.numberInQuran}`;
+  const [isLinked, setIsLinked] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    // window.location.hash is only known client-side, after mount — the
+    // browser has already scrolled to this anchor natively by this point;
+    // this just adds a temporary highlight on top of that.
+    if (window.location.hash !== `#${anchorId}`) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLinked(true);
+    const timeout = setTimeout(() => setIsLinked(false), 3000);
+    return () => clearTimeout(timeout);
+  }, [anchorId]);
+
   function handleToggle() {
     if (isActive) {
       togglePlayPause();
@@ -22,10 +39,28 @@ export function AyahCard({ ayah, index }: AyahCardProps) {
     }
   }
 
+  function handleCopyLink() {
+    if (typeof window === 'undefined') return;
+
+    const url = `${window.location.origin}${window.location.pathname}#${anchorId}`;
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {});
+  }
+
   return (
     <li
-      className={`flex flex-col gap-3 border-b border-zinc-100 py-6 last:border-b-0 dark:border-zinc-900 ${
-        isActive ? 'bg-zinc-50 dark:bg-zinc-900/40' : ''
+      id={anchorId}
+      className={`flex scroll-mt-20 flex-col gap-3 border-b border-zinc-100 py-6 transition-colors last:border-b-0 dark:border-zinc-900 ${
+        isLinked
+          ? 'bg-amber-50 dark:bg-amber-950/30'
+          : isActive
+            ? 'bg-zinc-50 dark:bg-zinc-900/40'
+            : ''
       }`}
     >
       <div className="flex items-start gap-3">
@@ -60,6 +95,13 @@ export function AyahCard({ ayah, index }: AyahCardProps) {
           {ayah.translations.urdu}
         </p>
       ) : null}
+      <button
+        type="button"
+        onClick={handleCopyLink}
+        className="ml-10 self-start text-xs font-medium text-zinc-400 underline-offset-2 hover:text-zinc-600 hover:underline dark:text-zinc-500 dark:hover:text-zinc-300"
+      >
+        {copied ? 'Copied!' : 'Copy link'}
+      </button>
     </li>
   );
 }
