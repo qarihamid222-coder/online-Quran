@@ -29,21 +29,31 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run format`       | Format with Prettier             |
 | `npm run format:check` | Check formatting without writing |
 | `npm run typecheck`    | TypeScript type-check, no emit   |
+| `npm test`             | Run unit tests (Vitest)          |
 
 ## Project structure
 
 ```
-app/           Routes (App Router pages, layouts, API routes)
+app/               Routes (App Router pages, layouts, API routes)
+  quran/           Surah list and surah reader pages
 components/
-  quran/       Quran-specific UI (AyahCard, AudioPlayer, TafsirPanel, ...)
-  layout/      Navbar, Footer, Sidebar
-  ui/          Shared/generic UI primitives
-lib/           API clients, utilities
-hooks/         Reusable React hooks
-store/         Client-side state (Zustand)
-prisma/        Database schema (added in a later phase)
-tests/         Automated tests
+  quran/           Quran-specific UI (SurahCard, SurahList, SurahHeader, AyahCard, ...)
+  layout/          Navbar, Footer, Sidebar
+  ui/              Shared/generic UI primitives (Skeleton, EmptyState, ErrorState)
+lib/
+  quran/           Quran data client — isolated wrapper around the external Quran API
+hooks/             Reusable React hooks
+store/             Client-side state (Zustand)
+prisma/            Database schema (added in a later phase)
+tests/             Automated tests (mirrors the source layout)
 ```
+
+## Quran data
+
+Surah and ayah data (Arabic Uthmani text, English and Urdu translations) is fetched at
+request time from the [alquran.cloud](https://alquran.cloud) API through `lib/quran/`,
+which exposes typed domain models (`SurahSummary`, `SurahDetail`, `Ayah`) so the
+underlying provider can be swapped later without touching UI code.
 
 ## Roadmap
 
