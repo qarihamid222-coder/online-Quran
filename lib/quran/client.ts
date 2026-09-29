@@ -4,6 +4,7 @@ import {
   TOTAL_SURAHS,
   TRANSLATION_EDITIONS,
 } from './constants';
+import { getAyahAudioUrl } from './audio';
 import type { Ayah, RevelationType, SurahDetail, SurahSummary } from './types';
 
 export class QuranApiError extends Error {
@@ -134,6 +135,7 @@ export async function fetchSurah(surahNumber: number): Promise<SurahDetail> {
       english: englishEdition?.ayahs[index]?.text,
       urdu: urduEdition?.ayahs[index]?.text,
     },
+    audioUrl: getAyahAudioUrl(ayah.number),
   }));
 
   return {

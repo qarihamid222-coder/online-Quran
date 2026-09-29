@@ -42,7 +42,7 @@ components/
   ui/              Shared/generic UI primitives (Skeleton, EmptyState, ErrorState)
 lib/
   quran/           Quran data client — isolated wrapper around the external Quran API
-hooks/             Reusable React hooks
+hooks/             Reusable React hooks (useAudioPlayer)
 store/             Client-side state (Zustand)
 prisma/            Database schema (added in a later phase)
 tests/             Automated tests (mirrors the source layout)
@@ -54,6 +54,15 @@ Surah and ayah data (Arabic Uthmani text, English and Urdu translations) is fetc
 request time from the [alquran.cloud](https://alquran.cloud) API through `lib/quran/`,
 which exposes typed domain models (`SurahSummary`, `SurahDetail`, `Ayah`) so the
 underlying provider can be swapped later without touching UI code.
+
+## Audio
+
+Each ayah carries a deterministic recitation URL (`lib/quran/audio.ts`, served from the
+islamic.network CDN — no extra API call needed). On the surah reader page,
+`AudioPlayerProvider` (`components/quran/AudioPlayerProvider.tsx`) manages a single shared
+`<audio>` element via the `useAudioPlayer` hook: tapping any ayah's play button starts a
+queue that continues sequentially through the rest of the surah, which also serves as
+"play surah" when started from the first ayah.
 
 ## Roadmap
 

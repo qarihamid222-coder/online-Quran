@@ -19,6 +19,7 @@ export interface Ayah {
   numberInQuran: number;
   arabicText: string;
   translations: AyahTranslations;
+  audioUrl: string;
 }
 
 export interface SurahDetail extends SurahSummary {

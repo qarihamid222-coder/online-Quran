@@ -164,6 +164,7 @@ describe('fetchSurah', () => {
         english: 'In the name of Allah',
         urdu: 'اللہ کے نام سے',
       },
+      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3',
     });
   });
 
