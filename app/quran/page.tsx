@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SurahList } from '@/components/quran/SurahList';
+import { SurahSearch } from '@/components/quran/SurahSearch';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { fetchSurahList } from '@/lib/quran';
 
@@ -24,7 +24,7 @@ export default async function QuranSurahListPage() {
           description="The Quran data service returned no surahs. Please try again later."
         />
       ) : (
-        <SurahList surahs={surahs} />
+        <SurahSearch surahs={surahs} />
       )}
     </div>
   );

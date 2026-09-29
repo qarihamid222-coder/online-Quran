@@ -3,14 +3,19 @@
 import { useEffect, useState } from 'react';
 import type { Ayah } from '@/lib/quran';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useAyahSearch } from '@/hooks/useAyahSearch';
+import { BookmarkButton } from './BookmarkButton';
 
 interface AyahCardProps {
   ayah: Ayah;
   index: number;
+  surahNumber: number;
+  surahEnglishName: string;
 }
 
-export function AyahCard({ ayah, index }: AyahCardProps) {
+export function AyahCard({ ayah, index, surahNumber, surahEnglishName }: AyahCardProps) {
   const { currentIndex, isPlaying, isLoading, playFromIndex, togglePlayPause } = useAudioPlayer();
+  const { isMatch } = useAyahSearch();
   const isActive = currentIndex === index;
   const isActivePlaying = isActive && isPlaying;
   const isActiveLoading = isActive && isLoading;
@@ -50,6 +55,10 @@ export function AyahCard({ ayah, index }: AyahCardProps) {
         setTimeout(() => setCopied(false), 2000);
       })
       .catch(() => {});
+  }
+
+  if (!isMatch(ayah.numberInQuran)) {
+    return null;
   }
 
   return (
@@ -95,13 +104,22 @@ export function AyahCard({ ayah, index }: AyahCardProps) {
           {ayah.translations.urdu}
         </p>
       ) : null}
-      <button
-        type="button"
-        onClick={handleCopyLink}
-        className="ml-10 self-start text-xs font-medium text-zinc-400 underline-offset-2 hover:text-zinc-600 hover:underline dark:text-zinc-500 dark:hover:text-zinc-300"
-      >
-        {copied ? 'Copied!' : 'Copy link'}
-      </button>
+      <div className="ml-10 flex items-center gap-4">
+        <BookmarkButton
+          numberInQuran={ayah.numberInQuran}
+          surahNumber={surahNumber}
+          surahEnglishName={surahEnglishName}
+          ayahNumber={ayah.number}
+          snippet={ayah.translations.english ?? ayah.arabicText}
+        />
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="text-xs font-medium text-zinc-400 underline-offset-2 hover:text-zinc-600 hover:underline dark:text-zinc-500 dark:hover:text-zinc-300"
+        >
+          {copied ? 'Copied!' : 'Copy link'}
+        </button>
+      </div>
     </li>
   );
 }

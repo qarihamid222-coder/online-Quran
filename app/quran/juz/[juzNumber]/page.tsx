@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { Fragment } from 'react';
 import { AudioPlayerProvider } from '@/components/quran/AudioPlayerProvider';
 import { AyahCard } from '@/components/quran/AyahCard';
+import { AyahSearchInput } from '@/components/quran/AyahSearchInput';
+import { AyahSearchProvider } from '@/components/quran/AyahSearchProvider';
 import { SurahAudioControls } from '@/components/quran/SurahAudioControls';
 import { SurahDivider } from '@/components/quran/SurahDivider';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -47,6 +49,20 @@ export default async function JuzReaderPage({ params }: PageProps<'/quran/juz/[j
   const previousJuz = juzNumber > 1 ? juzNumber - 1 : null;
   const nextJuz = juzNumber < TOTAL_JUZ ? juzNumber + 1 : null;
 
+  // Global ayah numbers belonging to each surah-group, keyed by the index of
+  // that group's first ayah — used so a divider can hide itself if a search
+  // filters out every ayah in its group.
+  const groupAyahNumbers = new Map<number, number[]>();
+  let currentGroupStartIndex = 0;
+  juz.ayahs.forEach((ayah, index) => {
+    if (index === 0 || ayah.surahNumber !== juz.ayahs[index - 1].surahNumber) {
+      currentGroupStartIndex = index;
+      groupAyahNumbers.set(currentGroupStartIndex, [ayah.numberInQuran]);
+    } else {
+      groupAyahNumbers.get(currentGroupStartIndex)?.push(ayah.numberInQuran);
+    }
+  });
+
   return (
     <article className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
       <header className="flex flex-col items-center gap-2 border-b border-zinc-200 pb-6 text-center dark:border-zinc-800">
@@ -63,25 +79,34 @@ export default async function JuzReaderPage({ params }: PageProps<'/quran/juz/[j
         </div>
       ) : (
         <AudioPlayerProvider ayahs={juz.ayahs}>
-          <SurahAudioControls />
-          <ol className="mt-2">
-            {juz.ayahs.map((ayah, index) => {
-              const showDivider = ayah.surahNumber !== juz.ayahs[index - 1]?.surahNumber;
+          <AyahSearchProvider ayahs={juz.ayahs}>
+            <SurahAudioControls />
+            <AyahSearchInput />
+            <ol className="mt-2">
+              {juz.ayahs.map((ayah, index) => {
+                const groupNumbers = groupAyahNumbers.get(index);
 
-              return (
-                <Fragment key={ayah.numberInQuran}>
-                  {showDivider ? (
-                    <SurahDivider
+                return (
+                  <Fragment key={ayah.numberInQuran}>
+                    {groupNumbers ? (
+                      <SurahDivider
+                        surahNumber={ayah.surahNumber}
+                        surahName={ayah.surahName}
+                        surahEnglishName={ayah.surahEnglishName}
+                        ayahNumbers={groupNumbers}
+                      />
+                    ) : null}
+                    <AyahCard
+                      ayah={ayah}
+                      index={index}
                       surahNumber={ayah.surahNumber}
-                      surahName={ayah.surahName}
                       surahEnglishName={ayah.surahEnglishName}
                     />
-                  ) : null}
-                  <AyahCard ayah={ayah} index={index} />
-                </Fragment>
-              );
-            })}
-          </ol>
+                  </Fragment>
+                );
+              })}
+            </ol>
+          </AyahSearchProvider>
         </AudioPlayerProvider>
       )}
 

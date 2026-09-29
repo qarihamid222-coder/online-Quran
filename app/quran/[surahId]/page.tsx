@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AudioPlayerProvider } from '@/components/quran/AudioPlayerProvider';
 import { AyahCard } from '@/components/quran/AyahCard';
+import { AyahSearchInput } from '@/components/quran/AyahSearchInput';
+import { AyahSearchProvider } from '@/components/quran/AyahSearchProvider';
 import { SurahAudioControls } from '@/components/quran/SurahAudioControls';
 import { SurahHeader } from '@/components/quran/SurahHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -59,12 +61,21 @@ export default async function SurahReaderPage({ params }: PageProps<'/quran/[sur
         </div>
       ) : (
         <AudioPlayerProvider ayahs={surah.ayahs}>
-          <SurahAudioControls />
-          <ol className="mt-2">
-            {surah.ayahs.map((ayah, index) => (
-              <AyahCard key={ayah.number} ayah={ayah} index={index} />
-            ))}
-          </ol>
+          <AyahSearchProvider ayahs={surah.ayahs}>
+            <SurahAudioControls />
+            <AyahSearchInput />
+            <ol className="mt-2">
+              {surah.ayahs.map((ayah, index) => (
+                <AyahCard
+                  key={ayah.number}
+                  ayah={ayah}
+                  index={index}
+                  surahNumber={surah.number}
+                  surahEnglishName={surah.englishName}
+                />
+              ))}
+            </ol>
+          </AyahSearchProvider>
         </AudioPlayerProvider>
       )}
 

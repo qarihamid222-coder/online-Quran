@@ -36,15 +36,19 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 app/               Routes (App Router pages, layouts, API routes)
   quran/           Surah list, surah reader, juz index, and juz reader pages
+  bookmarks/       Bookmarks page
 components/
-  quran/           Quran-specific UI (SurahCard, SurahList, SurahHeader, AyahCard, SurahDivider, ...)
-  layout/          Navbar, ThemeToggle, Footer, Sidebar
+  quran/           Quran-specific UI (SurahCard, SurahList, SurahHeader, AyahCard, SurahDivider,
+                    SurahSearch, AyahSearchInput, BookmarkButton, ...)
+  bookmarks/       Bookmarks list UI
+  layout/          Navbar, ThemeToggle, BookmarksNavLink, Footer, Sidebar
   ui/              Shared/generic UI primitives (Skeleton, EmptyState, ErrorState)
 lib/
   quran/           Quran data client — isolated wrapper around the external Quran API
+                    (search.ts holds the pure surah/ayah search predicates)
   theme.ts         Light/Dark/System theme state, shared by the toggle and the blocking init script
-hooks/             Reusable React hooks (useAudioPlayer)
-store/             Client-side state (Zustand)
+hooks/             Reusable React hooks (useAudioPlayer, useAyahSearch, useBookmarks)
+store/             Client-side state (bookmarks.ts: a small localStorage-backed store)
 prisma/            Database schema (added in a later phase)
 tests/             Automated tests (mirrors the source layout)
 ```
@@ -76,6 +80,19 @@ whole juz, spanning surahs.
 - **Dark mode** — a Light/Dark/System toggle in the navbar (`components/layout/ThemeToggle.tsx`),
   backed by `lib/theme.ts` and a blocking init script in `app/layout.tsx` so there's no
   flash of the wrong theme on load.
+
+## Search & bookmarks
+
+- **Surah search** — the surah list (`/quran`) filters by English name, meaning, Arabic
+  name, or number as you type (`filterSurahs()` in `lib/quran/search.ts`).
+- **Verse search** — surah and juz reader pages have a search box that filters the
+  already-loaded ayahs by Arabic, English, or Urdu text, or by ayah number
+  (`matchesAyahQuery()`; `AyahSearchProvider`/`useAyahSearch`), without disturbing the
+  audio queue's indexing.
+- **Bookmarks** — tap "Bookmark" on any ayah to save it, no account needed. Bookmarks
+  live in `localStorage` (`store/bookmarks.ts`) and stay in sync across every open
+  component via `useBookmarks()`. View and remove them on the `/bookmarks` page; the
+  navbar shows a live count.
 
 ## Roadmap
 

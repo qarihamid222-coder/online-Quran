@@ -1,12 +1,28 @@
+'use client';
+
 import Link from 'next/link';
+import { useAyahSearch } from '@/hooks/useAyahSearch';
 
 interface SurahDividerProps {
   surahNumber: number;
   surahName: string;
   surahEnglishName: string;
+  /** Global ayah numbers belonging to this surah within the current group. */
+  ayahNumbers: number[];
 }
 
-export function SurahDivider({ surahNumber, surahEnglishName, surahName }: SurahDividerProps) {
+export function SurahDivider({
+  surahNumber,
+  surahEnglishName,
+  surahName,
+  ayahNumbers,
+}: SurahDividerProps) {
+  const { isMatch } = useAyahSearch();
+
+  if (!ayahNumbers.some(isMatch)) {
+    return null;
+  }
+
   return (
     <li className="mt-6 mb-2 list-none first:mt-0">
       <Link
